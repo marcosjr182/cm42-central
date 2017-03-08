@@ -4,6 +4,7 @@ var User = require('models/user');
 var ProjectView = require('views/project_view');
 var ProjectSearchView = require('views/project_search_view');
 var ProjectVelocityView = require('views/project_velocity_view');
+var HistoryView = require('views/history_view');
 
 require('./global_listeners');
 
@@ -18,12 +19,14 @@ var Central = module.exports = {
       var view     = new ProjectView({ model: project, el: $('#project-stories') });
       var search   = new ProjectSearchView({ model: project, el: $('#form_search') });
       var velocity = new ProjectVelocityView({ model: project, el: $('#velocity') });
+      var history  = new HistoryView({el: $('#history'), users: project.users});
 
       project.users.reset(data.users);
       project.current_user = new User(data.currentUser);
 
       view.velocityView = velocity;
       view.searchView   = search;
+      view.historyView  = history;
       view.scaleToViewport();
 
       $(window).resize(view.scaleToViewport);

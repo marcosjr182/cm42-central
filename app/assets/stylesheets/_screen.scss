@@ -657,3 +657,43 @@ div#keycut-help {
 .btn-clipboard {
   padding: 4px 12px 5px;
 }
+
+.activity {
+  @extend .story;
+
+  &-date {
+    float: right;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  &-info {
+    border-collapse: collapse;
+    display: table;
+    margin: .5em 0;
+    margin-left: 5%;
+    width: 94%;
+  }
+
+  &-changes {
+    background: $white;
+    padding: .4em;
+  }
+
+  &-change-history,
+  &-change-attribute {
+    display: table-cell;
+    border-collapse: collapse;
+    width: auto;
+  }
+
+  &-change-history {
+    font-style: italic;
+    width: 99%;
+  }
+
+  &-change-attribute {
+    white-space: nowrap;
+    padding: 0 5px;
+  }
+}

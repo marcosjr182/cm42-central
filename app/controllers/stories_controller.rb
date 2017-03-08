@@ -85,6 +85,12 @@ class StoriesController < ApplicationController
     end
   end
 
+  def history
+    @story = policy_scope(Story).try(:with_dependencies).try(:find, params[:story_id])
+    authorize @story
+    render json: Activity.by_story(@story.id)
+  end
+
   private
 
   def allowed_params

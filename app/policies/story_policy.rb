@@ -7,6 +7,10 @@ class StoryPolicy < ApplicationPolicy
     is_admin? || is_project_member? && current_project.stories.find_by_id(record.id)
   end
 
+  def history?
+    is_admin? || is_project_member? && current_project.stories.find_by_id(record.id)
+  end
+
   def create?
     is_admin? || is_project_member?
   end
@@ -41,4 +45,3 @@ class StoryPolicy < ApplicationPolicy
     end
   end
 end
-
