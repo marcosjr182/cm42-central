@@ -1,0 +1,81 @@
+<div class="form-group story-controls">
+  <% if(!view.isReadonly()) { %>
+    <input type="button" class="submit" value="<%= I18n.t('save') %>">
+    <% if (!view.model.isNew()) { %>
+      <input type="button" class="destroy" value="<%= I18n.t('delete')%>">
+    <% } %>
+  <% } %>
+  <input type="button" class="cancel" value="<%= I18n.t('cancel')%>">
+  <% view.disableControlButtons() %>
+</div>
+
+<% if (story.id != undefined) { %>
+  <div class="col-xs-12 form-group input-group input-group-sm">
+    <input id="story-link-<%= story.id %>" type="text" class="form-control input-sm"
+           value="<%= view.getLocation() + '#story-' + story.id %>"
+           readonly >
+
+    <span class="input-group-btn">
+      <button type="button" class="btn btn-default btn-clipboard"
+              data-clipboard-target="#story-link-<%= story.id %>">
+        <i class="mi md-18 icon-xs">content_copy</i>
+      </button>
+      <button type="button" class="btn btn-default toggle-history">
+        <i class="mi md-18 icon-xs">history</i>
+      </button>
+    </span>
+  </div>
+<% } %>
+
+<div class="form-group">
+  <input type="text" name="title" maxlength="255"
+         class="title form-control input-sm"
+         disabled="<%= view.isReadonly() %>"
+         placeholder="<%= I18n.t('story title') %>"
+         value="<%= story.get('title') %>">
+</div>
+
+<div class="form-group form-inline">
+  <div class="form-group">
+    <label for="estimate"><%= story.humanAttributeName('estimate') %></label><br/>
+    <select name="estimate" class="form-control input-sm story_estimate">
+      <option value="" <%= isReadonly %> <%= notEstimable %>>
+        <%= view.translate('story.no_estimate') %>
+      </option>
+
+      <% _.each(story.point_values(), function(value) { %>
+        <option value="<%= value %>"><%= value %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="story_type"><%= story.humanAttributeName('story_type') %></label><br/>
+    <select name="story_type" class="form-control input-sm story_type" <%= isReadonly %>>
+      <% _.each(["feature", "chore", "bug", "release"], function(option) { %>
+        <option value="<%= option %>"><%= view.translate('story.type.' + option) %></option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="state"><%= story.humanAttributeName('state') %></label><br/>
+    <select name="state" class="form-control input-sm" <%= isReadonly %>>
+      <% _.each(["unscheduled", "unstarted", "started", "finished", "delivered", "accepted", "rejected"], function(option) { %>
+        <option value="<%= option %>"><%= view.translate('story.state.' + option) %></option>
+      <% }) %>
+    </select>
+  </div>
+</div>
+
+<div class="form-group form-inline">
+  <div class="form-group">
+    <label for="requested_by_id"><%= story.humanAttributeName('requested_by_id') %></label><br/>
+    <select name="requested_by_id" class="form-control input-sm">
+      <option value="">---</option>
+      <% _.each(story.collection.project.users.forSelect(), function(user){ %>
+        <option value="<%= user[1] %>"><%= user[0] %></option>
+      <% }) %>
+    </select>
+  </div>
+</div>
