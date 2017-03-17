@@ -22,11 +22,9 @@ module.exports = FormView.extend({
     _.extend(this, _.pick(options, "isSearchResult"));
 
     _.bindAll(this, "render", "highlight", "moveColumn", "setClassName",
-      "transition", "estimate", "disableForm", "renderNotes",
-      "renderNotesCollection", "addEmptyNote", "hoverBox",
-      "renderTasks", "renderTasksCollection", "addEmptyTask",
-      "clickSave", "attachmentDone", "attachmentStart",
-      "disableControlButtons");
+      "transition", "estimate", "disableForm", "renderNotesCollection",
+      "addEmptyNote", "hoverBox", "renderTasksCollection", "addEmptyTask",
+      "clickSave", "attachmentDone", "attachmentStart", "disableControlButtons");
 
     // Rerender on any relevant change to the views story
     this.model.on("change", this.render);
@@ -339,17 +337,61 @@ module.exports = FormView.extend({
   },
 
   render: function() {
+    var isReadonly = this.isReadonly();
+    var randomId = Math.floor(Math.random() * 10000) + 1;
+    var attachmentsField = this.fileField('documents', 'documents_progress_' + randomId,  'documents_finished_' + randomId, 'attachinary_container_' + randomId);
+    var story = this.model;
+
     if (this.canEdit()){
       this.$el.addClass('editing');
       this.$el.html(this.templateExpanded({
-        story: this.model,
-        view: this,
-        isReadonly: this.isReadonly() ? 'disabled' : '',
-        notEstimable: this.model.notEstimable() ? 'disabled' : ''
+        story: story,
+        isNew: story.isNew(),
+        isReadonly: isReadonly,
+        disabled: isReadonly ? 'disabled' : '',
+        notEstimable: story.notEstimable() ? 'disabled' : '',
+        url: this.getLocation() + '#story-' + story.id,
+        randomId: randomId,
+        attachmentsField: attachmentsField,
+        relationships: {
+          attributes: ['requested_by_id', 'owned_by_id'],
+          options: story.collection.project.users.forSelect()
+        }
       }));
 
+      this.disableControlButtons();
+
+      this.renderNotesCollection();
+      this.renderTasksCollection();
+
+      var $description = this.$('.story_description');
+
+      this.bindElementToAttribute($description, 'description');
+      this.bindElementToAttribute(this.$('.story_estimate'), 'estimate');
+      this.bindElementToAttribute(this.$('.story_owned_by_id'), 'owned_by_id');
+      this.bindElementToAttribute(this.$('.story_requested_by_id'), 'requested_by_id');
+      this.bindElementToAttribute(this.$('.story_state'), 'state');
+      this.bindElementToAttribute(this.$('.story_title'), 'title');
+      this.bindElementToAttribute(this.$('.story_type'), 'story_type');
+
+      this.bindProgressBar({
+        progress_id: 'documents_progress_' + randomId,
+        finished_id: 'documents_finished_' + randomId
+      });
+
+      $description.atwho({
+        at: "@",
+        data: window.projectView.usernames(),
+      });
+
+      new Clipboard('.btn-clipboard');
+
+      // FIXME: refactor to a separated AttachmentView or similar
+      // must run the plugin after the element is available in the DOM, not before, hence, the setTimeout
+      clearTimeout(window.executeAttachinaryTimeout);
+      window.executeAttachinaryTimeout = setTimeout(executeAttachinary, 500);
+
       this.initTags();
-      this.renderNotes();
     } else {
       this.$el.removeClass('editing');
       this.$el.html(this.template({story: this.model, view: this}));
@@ -357,223 +399,27 @@ module.exports = FormView.extend({
 
     this.hoverBox();
     return this;
+  },
 
-    if(this.canEdit()) {
+  bindProgressBar: function(field) {
+    this.$('.attachinary-input').bind('fileuploadprogressall', (function(_this, _progress_element_id, _finished_element_id) {
+      return function(e, data) {
+        var el_progress = $('#' + _progress_element_id);
+        if ( el_progress.is(":hidden") )
+        el_progress.show();
 
-      this.$el.empty();
-      this.$el.addClass('editing');
+        var progress = parseInt(data.loaded / data.total * 100, 10);
+        el_progress.css('width', progress + "%");
 
-      this.$el.append(
-        this.makeFormControl(function(div) {
-          $(div).addClass('story-controls');
-          if(!this.isReadonly()) {
-            $(div).append(this.submit());
-            if (!this.model.isNew()) {
-              $(div).append(this.destroy());
-            }
-          }
-          $(div).append(this.cancel());
-          this.disableControlButtons();
-        })
-      );
+        if (progress == 100) {
+          el_progress.css('width', "1px");
+          el_progress.hide();
 
-      // if (this.id != undefined) {
-      //   var $wrapper = $(this.make('div', {class: 'col-xs-12 form-group input-group input-group-sm', id: inputId}));
-      //   var inputId = 'story-link-' + this.id;
-      //
-      //   $wrapper.append(this.make('input', {
-      //     id: inputId,
-      //     class: 'form-control input-sm',
-      //     value: this.getLocation() + '#story-' + this.id,
-      //     readonly: true,
-      //   }));
-      //
-      //   var $btnWrapper = $(this.make('span', {class: 'input-group-btn'}));
-      //
-      //   // Story's copy to clipboard button
-      //   var btn = this.make('button', {
-      //     class: 'btn btn-default btn-clipboard',
-      //     'data-clipboard-target': '#'+inputId,
-      //     type: 'button'
-      //   });
-      //   $(btn).html('<img src="/clippy.svg" alt="Copy to clipboard" width="14px">');
-      //   $btnWrapper.append(btn);
-      //
-      //   // Story history button
-      //   btn = this.make('button', {class: 'btn btn-default toggle-history'})
-      //   $(btn).html('<i class="mi md-18">history</i>');
-      //   $btnWrapper.append(btn);
-      //
-      //   $wrapper.append($btnWrapper[0]);
-      //   this.$el.append($wrapper[0]);
-      //
-      //   // activate the clipboard link
-      //   new Clipboard('.btn-clipboard');
-      // }
+          $('#' + _finished_element_id).show();
+        }
+      };
+    })(this.$el, field.progress_id, field.finished_id));
 
-      // this.$el.append(
-      //   this.makeFormControl(function(div) {
-      //     $(div).append(this.textField("title", {
-      //       'class' : 'title form-control input-sm',
-      //       'placeholder': I18n.t('story title'),
-      //       'maxlength': 255,
-      //       'disabled': this.isReadonly()
-      //     }));
-      //   })
-      // );
-
-      this.$el.append(
-        this.makeFormControl(function(div) {
-          $(div).addClass('form-inline');
-          $(div).append(this.makeFormControl({
-            name: 'estimate',
-            label: true,
-            control: this.select("estimate", this.model.point_values(), {
-              blank: I18n.t('story.no_estimate'),
-              attrs: {
-                class: ['story_estimate'],
-                disabled: this.model.notEstimable() || this.isReadonly()
-              }
-            })
-          }));
-
-          var story_type_options = [];
-          _.each(["feature", "chore", "bug", "release"], function(option) {
-            story_type_options.push([I18n.t('story.type.' + option), option])
-          });
-          $(div).append(this.makeFormControl({
-            name: "story_type",
-            label: true,
-            disabled: true,
-            control: this.select("story_type", story_type_options, {
-              attrs: {
-                class: ['story_type'],
-                disabled: this.isReadonly()
-              }
-            })
-          }));
-          var story_state_options = [];
-          _.each(["unscheduled", "unstarted", "started", "finished", "delivered", "accepted", "rejected"], function(option) {
-            story_state_options.push([ I18n.t('story.state.' + option), option ])
-          });
-          $(div).append(this.makeFormControl({
-            name: "state",
-            label: true,
-            control: this.select("state", story_state_options, {
-              attrs: {
-                class: [],
-                disabled: this.isReadonly()
-              }
-            })
-          }));
-        })
-      );
-
-      this.$el.append(
-        this.makeFormControl(function(div) {
-          $(div).addClass('form-inline');
-          $(div).append(this.makeFormControl({
-            name: "requested_by_id",
-            label: true,
-            control: this.select("requested_by_id",
-              this.model.collection.project.users.forSelect(), {
-                blank: '---',
-                attrs: {
-                  class: [],
-                  disabled: this.isReadonly()
-                }
-            })
-          }));
-          $(div).append(this.makeFormControl({
-            name: "owned_by_id",
-            label: true,
-            control: this.select("owned_by_id",
-              this.model.collection.project.users.forSelect(), {
-                blank: '---',
-                attrs: {
-                  class: [],
-                  disabled: this.isReadonly()
-                }
-            })
-          }));
-        })
-      );
-
-      this.$el.append(
-        this.makeFormControl({
-          name: "labels",
-          label: true,
-          control: this.textField("labels"),
-          class: 'form-control',
-          disabled: this.isReadonly()
-        })
-      );
-
-      this.$el.append(
-        this.makeFormControl(function(div) {
-          $(div).append(this.label("description", I18n.t('activerecord.attributes.story.description')));
-          $(div).append('<br/>');
-          if(this.model.isNew() || this.model.get('editingDescription')) {
-            var textarea = this.textArea("description");
-            $(textarea).atwho({
-              at: "@",
-              data: window.projectView.usernames(),
-            });
-            $(div).append(textarea);
-          } else {
-            var description = this.make('div');
-            $(description).addClass('description');
-            $(description).html(
-              window.md.makeHtml(this.model.escape('description'))
-            );
-            $(div).append(description);
-            if (!this.model.get('description') || 0 === this.model.get('description').length) {
-              $(description).after(
-                this.make('input', {
-                  class: this.isReadonly() ? '' : 'edit-description',
-                  type: 'button',
-                  value: I18n.t('edit')
-                })
-              );
-            }
-          }
-        })
-      );
-
-      this.renderTasks();
-
-      this.$el.append(
-        this.makeFormControl(function(div) {
-          var random = (Math.floor(Math.random() * 10000) + 1);
-          var progress_element_id = "documents_progress_" + random;
-          var finished_element_id = "documents_finished_" + random;
-          var attachinary_container_id = "attachinary_container_" + random;
-
-          $(div).append(this.label('attachments', I18n.t('story.attachments')));
-          $(div).addClass('uploads');
-          if(!this.isReadonly()) {
-            $(div).append(this.fileField("documents", progress_element_id, finished_element_id, attachinary_container_id));
-            $(div).append("<div id='" + progress_element_id + "' class='attachinary_progress_bar'></div>");
-          }
-          $(div).append('<div id="' + attachinary_container_id + '"></div>');
-
-          // FIXME: refactor to a separated AttachmentView or similar
-          // must run the plugin after the element is available in the DOM, not before, hence, the setTimeout
-          clearTimeout(window.executeAttachinaryTimeout);
-          window.executeAttachinaryTimeout = setTimeout(executeAttachinary, 500);
-        })
-      );
-
-      this.initTags();
-
-      this.renderNotes();
-
-    } else {
-      this.$el.removeClass('editing');
-      this.$el.html(this.template({story: this.model, view: this}));
-    }
-    this.hoverBox();
-    return this;
   },
 
   setClassName: function() {
@@ -616,24 +462,6 @@ module.exports = FormView.extend({
         model.set({ labels: $(that).val()});
       }, 50);
     });
-  },
-
-  renderNotes: function() {
-    if (this.model.notes.length > 0) {
-      var el = this.$el;
-      el.append(this.label('notes', I18n.t('story.notes')));
-      el.append('<div class="notelist"/>');
-      this.renderNotesCollection();
-    }
-  },
-
-  renderTasks: function() {
-    if (this.model.tasks.length > 0) {
-      var el = this.$el;
-      el.append(this.label('tasks', I18n.t('story.tasks')));
-      el.append('<div class="tasklist"/>');
-      this.renderTasksCollection();
-    }
   },
 
   renderNotesCollection: function() {
@@ -735,23 +563,6 @@ module.exports = FormView.extend({
     }
   },
 
-  makeFormControl: function(content) {
-    var div = this.make('div', {
-      class: 'form-group'
-    });
-    if (typeof content == 'function') {
-      content.call(this, div);
-    } else if (typeof content == 'object') {
-      var $div = $(div);
-      if (content.label) {
-        $div.append(this.label(content.name));
-        $div.append('<br/>');
-      }
-      $div.append(content.control);
-    }
-    return div;
-  },
-
   attachmentDone: function(event) {
     if (this.model.isNew()) {
       this.uploadInProgress = false;
@@ -784,8 +595,5 @@ module.exports = FormView.extend({
 
   history: function(e) {
     this.model.showHistory();
-  },
-  translate: function(text) {
-    return I18n.t(text);
   }
 });

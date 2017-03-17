@@ -15,7 +15,6 @@ module.exports = Backbone.Model.extend({
     attributes.subject_changes = this.parseChanges(data.subject_changes);
   },
 
-
   humanActionName: function(action) {
     return I18n.t(action, {scope: 'activity.actions'});
   },
@@ -29,6 +28,5 @@ module.exports = Backbone.Model.extend({
       }
     }, this);
   }
-
 
 });
