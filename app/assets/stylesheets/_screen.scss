@@ -150,6 +150,10 @@ div.story {
   &:not(.editing):not(.unestimated) {
     min-height: 37px;
   }
+
+  .input-group {
+    border-collapse: collapse;
+  }
 }
 
 div.story:hover {
@@ -168,20 +172,9 @@ div.story.chore.accepted{
   background-color: adjust-lightness($chameleon-1, 40);
 }
 
-div.story input[type=text],
-div.story textarea {
-  width: 99%;
-}
-
 div.story textarea {
   height: 50px;
   resize: none;
-}
-
-div.story {
-  .story_link {
-    width: 260px;
-  }
 }
 
 .story-icons {
