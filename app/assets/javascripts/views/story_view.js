@@ -8,9 +8,9 @@ var NoteForm = require('./note_form');
 var NoteView = require('./note_view');
 var TaskForm = require('./task_form');
 var TaskView = require('./task_view');
+var StoryLinkView = require('./story_link_view');
 
 module.exports = FormView.extend({
-
   template: require('templates/story.ejs'),
   alert: require('templates/alert.ejs'),
 
@@ -24,7 +24,7 @@ module.exports = FormView.extend({
       "renderNotesCollection", "addEmptyNote", "hoverBox",
       "renderTasks", "renderTasksCollection", "addEmptyTask",
       "clickSave", "attachmentDone", "attachmentStart",
-      "attachmentFail", "toggleControlButtons");
+      "attachmentFail", "toggleControlButtons", "createStoryLink");
 
     // Rerender on any relevant change to the views story
     this.model.on("change", this.render);
@@ -322,7 +322,10 @@ module.exports = FormView.extend({
       this.model.clear();
   },
 
-  editDescription: function() {
+  editDescription: function(ev) {
+    const $target = $(ev.target);
+    if (!$target.hasClass('description')) return;
+
     this.model.set({editingDescription: true});
     this.render();
   },
@@ -367,7 +370,7 @@ module.exports = FormView.extend({
           readonly: true,
         }));
 
-        var $btnWrapper = $(this.make('span', {class: 'input-group-btn'}));
+        var $btnWrapper = $(this.make('span', {class: 'input-group-btn story-actions-group'}));
 
         // Story's copy to clipboard button
         var btn = this.make('button', {
@@ -378,10 +381,19 @@ module.exports = FormView.extend({
         $(btn).html('<img src="/clippy.svg" alt="Copy to clipboard" width="14px">');
         $btnWrapper.append(btn);
 
+        btn = this.make('button', {
+          class: 'btn btn-default btn-clipboard-id btn-clipboard',
+          'data-clipboard-text': '#'+this.id,
+          type: 'button'
+        }, 'ID');
+        $btnWrapper.append(btn);
+
         // Story history button
         btn = this.make('button', {class: 'btn btn-default toggle-history'})
         $(btn).html('<i class="mi md-18">history</i>');
         $btnWrapper.append(btn);
+
+
 
         $wrapper.append($btnWrapper[0]);
         this.$el.append($wrapper[0]);
@@ -501,9 +513,8 @@ module.exports = FormView.extend({
           } else {
             var description = this.make('div');
             $(description).addClass('description');
-            $(description).html(
-              window.md.makeHtml(this.model.escape('description'))
-            );
+            $(description).html(this.parseDescription(this.model.escape('description')));
+
             $(div).append(description);
             if (!this.model.get('description') || 0 === this.model.get('description').length) {
               $(description).after(
@@ -685,22 +696,18 @@ module.exports = FormView.extend({
 
   // FIXME Move to separate view
   hoverBox: function() {
-    var view = this;
-    this.$el.find('.popover-activate').popover({
-      title: function() {
-        return view.model.get("title");
-      },
-      content: function() {
-        return require('templates/story_hover.ejs')({
-          story: view.model,
+    if (!this.model.isNew()) {
+      this.$el.find('.popover-activate').popover({
+        delay: 200, // A small delay to stop the popovers triggering whenever the mouse is moving around
+        html: true,
+        trigger: 'hover',
+        title: () => this.model.get("title"),
+        content: () => require('templates/story_hover.ejs')({
+          story: this.model,
           noteTemplate: require('templates/note.ejs')
-        });
-      },
-      // A small delay to stop the popovers triggering whenever the mouse is moving around
-      delay: 200,
-      html: true,
-      trigger: 'hover'
-    });
+        })
+      });
+    }
   },
 
   removeHoverbox: function() {
@@ -728,6 +735,25 @@ module.exports = FormView.extend({
       $div.append(content.control);
     }
     return div;
+  },
+
+  parseDescription: function(description) {
+    const regex = /(?!\s|\b)(#\d+)(?!\w)/g;
+    const htmlDescription = window.md.makeHtml(description) || '';
+
+    return htmlDescription.replace(regex, this.createStoryLink);
+  },
+
+  createStoryLink: function(story_id) {
+    const id = story_id.substring(1);
+    const story = this.model.collection.get(id);
+    if (!story) return story_id;
+
+    const story_url = `${this.getLocation()}#story-${id}`;
+    const $el = $(`<a class="popover-activate" href="${story_url}"></a>`);
+    const view = new StoryLinkView({model: story, el: $el}).render();
+
+    return view.el.outerHTML;
   },
 
   attachmentDone: function(event) {

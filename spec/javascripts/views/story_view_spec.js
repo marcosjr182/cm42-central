@@ -498,7 +498,9 @@ describe('StoryView', function() {
 
     it('is a text area after .edit-description is clicked', function() {
       this.view.model.isNew = sinon.stub().returns(false);
-      this.view.editDescription();
+      const event.target = this.view.$('div.edit-description').trigger('click');
+
+      this.view.editDescription(ev);
       expect(this.view.model.get('editingDescription')).toBeTruthy();
     });
 

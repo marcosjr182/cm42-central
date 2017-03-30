@@ -138,6 +138,20 @@ div.storycolumn {
   }
 }
 
+/* Iteration markers */
+.iteration {
+  padding: 5px 10px;
+  font-size: 11px;
+  color: $lightgrey-12;
+  background-color: $darkgrey-7;
+  border-top: 1px solid $darkgrey-8;
+  border-bottom: 1px solid $darkgrey-9;
+}
+
+.iteration .points {
+  float: right;
+}
+
 /* Story types */
 div.story {
   padding: 7px 8px;
@@ -220,6 +234,9 @@ div.story-title abbr.initials {
   margin-left: 0.2em;
   border: none;
 }
+.story-actions-group .btn-clipboard.btn-clipboard-id {
+  padding-top: 6px;
+}
 
 #in_progress div.story,
 #backlog div.story,
@@ -280,20 +297,6 @@ div.story-title abbr.initials {
 .state-actions form div,
 .state-actions form {
   display: inline;
-}
-
-/* Iteration markers */
-.iteration {
-  padding: 5px 10px;
-  font-size: 11px;
-  color: $lightgrey-12;
-  background-color: $darkgrey-7;
-  border-top: 1px solid $darkgrey-8;
-  border-bottom: 1px solid $darkgrey-9;
-}
-
-.iteration .points {
-  float: right;
 }
 
 .state-actions input {
@@ -359,6 +362,61 @@ a.button {
   color: $sky-blue-3;
   font-size: 84%;
   margin: 0;
+}
+
+.StoryLink {
+  background: $lightgrey-11;
+  border: 1px solid $lightgrey-13;
+  border-radius: 2px;
+  color: $darkgrey-3;
+  display: inline-block;
+  margin: 1px;
+  padding: 1px 3px;
+
+  &__icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: $white;
+    display: inline-block;
+    margin: -2px 0 0 2px;
+    vertical-align: middle;
+
+    &.started  {
+      background: $blue-4;
+    }
+
+    &.finished {
+      background: $butter-1;
+    }
+
+    &.delivered {
+      background: $chameleon-3;
+    }
+
+    &.aux.delivered {
+      margin-left: -1px;
+      background: $darkred;
+    }
+
+    &.mi.accepted,
+    &.mi.rejected {
+      color: $chameleon-3;
+      border: none;
+      font-size: 14px;
+      margin: -3px 1px 0 1px;
+    }
+
+    &.mi.rejected {
+      color: $darkred;
+    }
+  }
+
+  &:hover, &:focus {
+    background: $lightgrey-2;
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 // Popover Overrides
