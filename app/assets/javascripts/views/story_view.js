@@ -13,8 +13,6 @@ var executeAttachinary = require('libs/execute_attachinary');
 
 var FormView = require('./form_view');
 var EpicView = require('./epic_view');
-var NoteForm = require('./note_form');
-var NoteView = require('./note_view');
 var TaskForm = require('./task_form');
 var TaskView = require('./task_view');
 
@@ -33,7 +31,7 @@ module.exports = FormView.extend({
 
     _.bindAll(this, "render", "highlight", "moveColumn", "setClassName",
       "transition", "estimate", "disableForm", "renderNotes",
-      "addEmptyNote", "hoverBox", "renderTasks", "handleNoteDelete",
+      "hoverBox", "renderTasks", "handleNoteDelete",
       "renderTasksCollection", "addEmptyTask",
       "clickSave", "attachmentDone", "attachmentStart",
       "attachmentFail", "toggleControlButtons");
@@ -733,26 +731,6 @@ module.exports = FormView.extend({
     }
 
     this.model.tasks.add({});
-  },
-
-  addEmptyNote: function() {
-
-    // Don't add an empty note if the story is unsaved.
-    if (this.model.isNew()) {
-      return;
-    }
-
-    // Don't add an empty note if the notes collection already has a trailing
-    // new Note.
-    var last = this.model.notes.last();
-    if (last && last.isNew()) {
-      return;
-    }
-
-    // Add a new unsaved note to the collection.  This will be rendered
-    // as a form which will allow the user to add a new note to the story.
-    this.model.notes.add({});
-    this.$el.find('a.collapse,a.expand').removeClass(/icons-/).addClass('icons-throbber');
   },
 
   // FIXME Move to separate view

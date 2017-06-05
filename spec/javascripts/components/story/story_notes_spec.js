@@ -7,6 +7,7 @@ import NoteForm from 'components/notes/NoteForm';
 import NotesCollection from 'collections/note_collection.js';
 
 const notes = new NotesCollection();
+notes.add({ note: 'Test Note #1' });
 
 describe('<StoryNotes />', function() {
 
