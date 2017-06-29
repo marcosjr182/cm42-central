@@ -42,7 +42,7 @@ describe "Tasks" do
       visit project_path(project)
 
       within('#in_progress .story') do
-        find('.story-title').trigger('click')
+        click_on 'Delete me please'
         within('.tasklist') do
           click_on 'Delete'
         end
